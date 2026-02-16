@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  dorothy:
+    build: .
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./app:/app/app
+      - C:/Users/almaz/Downloads:/models
+
+    environment:
+      - MODEL_PATH=/models/gemma-2-9b-it-abliterated-Q3_K_M.gguf
