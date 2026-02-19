@@ -1,4 +1,8 @@
-class Message:
-    def __init__(self, role: str, content: str):
-        self.role = role
-        self.content = content
+from typing import Literal
+
+from pydantic import BaseModel
+
+
+class Message(BaseModel):
+    role: Literal["assistant", "user", "system"]
+    content: str

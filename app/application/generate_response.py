@@ -1,29 +1,20 @@
 from app.application.memory_manager import MemoryManager
+from app.application.prompt_builder import PromptBuilder
 from app.domain.entities.message import Message
-from app.domain.entities.persona import Persona
 from app.domain.interfaces.llm_interface import LLMInterface
 
 
 class GenerateResponse:
-    def __init__(self, llm: LLMInterface, memory: MemoryManager, persona: Persona):
+    def __init__(self, llm: LLMInterface, memory_manager: MemoryManager, prompt_builder: PromptBuilder):
         self.llm = llm
-        self.memory = memory
-        self.persona = persona
+        self.memory_manager = memory_manager
+        self.prompt_builder = prompt_builder
 
     async def execute(self, user_input: str) -> str:
-        history = self.memory.get_recent()
-
-        messages = self.build_messages(
-            self.persona.system_prompt,
-            history,
-            user_input
-        )
-
+        messages = self.prompt_builder.build(user_input)
         msg, response, _ = await self.llm.create_chat_completion(messages)
 
-        self.memory.save(msg)
+        self.memory_manager.save(Message(role="user", content=user_input))
+        self.memory_manager.save(msg)
 
         return response
-
-    def build_messages(self, system_prompt: str, history: list[Message], user_input: str) -> list[Message]:
-        return [Message("user", system_prompt), *history, Message("user", user_input)]
