@@ -19,3 +19,15 @@ class LLMInterface(ABC):
     @abstractmethod
     async def create_summarization_completion(self, user_input: str):
         pass
+
+    @abstractmethod
+    def count_tokens(self, text: str) -> int:
+        pass
+
+    @abstractmethod
+    def get_context_window(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_reserved_tokens(self) -> int:
+        pass
