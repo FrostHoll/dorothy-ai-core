@@ -7,11 +7,11 @@ from app.domain.interfaces.memory_repository import MemoryRepository
 
 
 class SQLiteMemory(MemoryRepository):
-    def __init__(self, connection: aiosqlite.Connection):
+    def __init__(self, connection: aiosqlite.Connection) -> None:
         self.connection = connection
         self.wal_enabled = False
 
-    async def init_db(self):
+    async def init_db(self) -> None:
         await self.connection.execute('''
                     DROP TABLE Memory
             ''')
@@ -30,14 +30,14 @@ class SQLiteMemory(MemoryRepository):
                     ''')
         await self.connection.commit()
 
-    def _map(self, message_obj):
+    def _map(self, message_obj) -> Message:
         return Message(
             role=message_obj['role'],
             content=message_obj['content'],
             token_count=message_obj['token_count']
         )
 
-    async def enable_wal(self):
+    async def enable_wal(self) -> None:
         await self.connection.execute("PRAGMA journal_mode=WAL;")
         await self.connection.commit()
         self.wal_enabled = True
@@ -58,7 +58,7 @@ class SQLiteMemory(MemoryRepository):
 
         return [self._map(row) for row in rows]
 
-    async def add_memory(self, message: Message, conversation_id: UUID):
+    async def add_memory(self, message: Message, conversation_id: UUID) -> None:
         convo_id = str(conversation_id)
         created_at = datetime.datetime.now()
 
@@ -68,7 +68,7 @@ class SQLiteMemory(MemoryRepository):
         ''', (message.role, message.content, created_at, message.token_count, convo_id))
         await self.connection.commit()
 
-    async def add_many_memory(self, messages: list[Message], conversation_id: UUID):
+    async def add_many_memory(self, messages: list[Message], conversation_id: UUID) -> None:
         convo_id = str(conversation_id)
         created_at = datetime.datetime.now()
 
@@ -79,5 +79,28 @@ class SQLiteMemory(MemoryRepository):
             ''', (message.role, message.content, created_at, message.token_count, convo_id))
         await self.connection.commit()
 
-    async def reset_db(self):
+    async def reset_db(self) -> None:
         await self.init_db()
+
+    async def get_conversations(self) -> list[str]:
+        cursor = await self.connection.execute('''
+            SELECT DISTINCT conversation_id FROM Memory
+        ''')
+        rows = await cursor.fetchall()
+        await cursor.close()
+        await self.connection.commit()
+        return [row['conversation_id'] for row in rows]
+
+    async def delete_conversation(self, conversation_id: UUID) -> None:
+        convo_id = str(conversation_id)
+
+        await self.connection.execute('''
+            DELETE FROM Memory WHERE conversation_id = ?
+        ''', (convo_id,))
+        await self.connection.commit()
+
+    async def delete_all_conversations(self) -> None:
+        await self.connection.execute('''
+            DELETE FROM Memory
+        ''')
+        await self.connection.commit()

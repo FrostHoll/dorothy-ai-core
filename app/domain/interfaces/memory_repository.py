@@ -25,3 +25,15 @@ class MemoryRepository(ABC):
     @abstractmethod
     async def reset_db(self):
         pass
+
+    @abstractmethod
+    async def get_conversations(self):
+        pass
+
+    @abstractmethod
+    async def delete_conversation(self, conversation_id: UUID) -> None:
+        pass
+
+    @abstractmethod
+    async def delete_all_conversations(self) -> None:
+        pass

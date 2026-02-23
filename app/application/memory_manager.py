@@ -20,6 +20,7 @@ class MemoryManager:
                 result.append(msg)
             else:
                 break
+        result.reverse()
         return result
 
     async def save(self, message: Message, conversation_id: UUID):
@@ -30,3 +31,12 @@ class MemoryManager:
 
     async def reset_db(self):
         await self.repository.reset_db()
+
+    async def get_conversations(self) -> list[str]:
+        return await self.repository.get_conversations()
+
+    async def delete_conversation(self, conversation_id: UUID) -> None:
+        await self.repository.delete_conversation(conversation_id)
+
+    async def delete_all_conversations(self) -> None:
+        await self.repository.delete_all_conversations()

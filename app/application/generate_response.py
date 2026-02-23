@@ -24,3 +24,10 @@ class GenerateResponse:
         ], conversation_id)
 
         return response
+
+    async def preview_window(self, memory_manager: MemoryManager, conversation_id: uuid.UUID) -> list[Message]:
+        token_budget = self.llm.get_context_window() - self.llm.get_reserved_tokens()
+        user_message = Message(role="user", content="")
+        messages = await self.prompt_builder.build(user_message, memory_manager, conversation_id, token_budget)
+
+        return messages
