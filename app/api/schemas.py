@@ -3,11 +3,18 @@ from pydantic import BaseModel
 from app.domain.entities.message import Message
 
 
-class GenerateRequest(BaseModel):
+class ChatRequest(BaseModel):
+    conversation_id: str
     message: str
 
-class GenerateResponseSchema(BaseModel):
+class ChatResponse(BaseModel):
     response: str
 
-class HistoryGetResponse(BaseModel):
+class ConversationGetResponse(BaseModel):
     messages: list[Message]
+
+class ConversationStartResponse(BaseModel):
+    conversation_id: str
+
+class ConversationsGetAllResponse(BaseModel):
+    conversations: list[str]

@@ -48,7 +48,7 @@ class LlamaEngine:
         total_tokens = total_tokens_generated + prompt_tokens
         text = self.generated_text.strip()
         print(f"[LLM]: Response:({text}) Generation time: {end_time - start_time:.2f} s")
-        return Message(role="assistant", content=text), self.generated_text, total_tokens
+        return Message(role="assistant", content=text, token_count=total_tokens_generated), self.generated_text, total_tokens
 
 ##TODO: complete restore and summarization logic
 
@@ -57,3 +57,6 @@ class LlamaEngine:
 
     def create_summarization_completion(self, prompt):
         pass
+
+    def count_tokens(self, text: str) -> int:
+        return len(self.model.tokenize(text=text.encode("utf-8")))

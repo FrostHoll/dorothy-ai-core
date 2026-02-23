@@ -1,18 +1,11 @@
 from fastapi import FastAPI
 
-from app.api.schemas import GenerateRequest, GenerateResponseSchema, HistoryGetResponse
+from app.api.dependencies import MemoryManagerDep
 
 
 def register_routes(app: FastAPI, container):
 
-    @app.post("/generate", response_model=GenerateResponseSchema)
-    async def generate(request: GenerateRequest):
-        use_case = container["generate_response"]
-        result = await use_case.execute(request.message)
-        return GenerateResponseSchema(response=result)
-
-    @app.get("/history", response_model=HistoryGetResponse)
-    async def get_history():
-        use_case = container["memory_manager"]
-        result = use_case.get_recent()
-        return HistoryGetResponse(messages=result)
+    @app.post("/reset")
+    async def reset_history(memory_manager: MemoryManagerDep):
+        memory_manager.reset_db()
+        return {"message": "DB has been reset."}

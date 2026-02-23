@@ -1,4 +1,6 @@
+import uuid
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from app.domain.entities.message import Message
 
@@ -9,9 +11,29 @@ class MemoryRepository(ABC):
         pass
 
     @abstractmethod
-    def get_short_memories(self) -> list[Message]:
+    async def get_recent(self, conversation_id: UUID) -> list[Message]:
         pass
 
     @abstractmethod
-    def add_memory(self, message: Message):
+    async def add_memory(self, message: Message, conversation_id: uuid.UUID):
+        pass
+
+    @abstractmethod
+    async def add_many_memory(self, messages: list[Message], conversation_id: UUID):
+        pass
+
+    @abstractmethod
+    async def reset_db(self):
+        pass
+
+    @abstractmethod
+    async def get_conversations(self):
+        pass
+
+    @abstractmethod
+    async def delete_conversation(self, conversation_id: UUID) -> None:
+        pass
+
+    @abstractmethod
+    async def delete_all_conversations(self) -> None:
         pass

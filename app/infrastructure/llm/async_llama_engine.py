@@ -5,6 +5,7 @@ from app.domain.entities.message import Message
 from app.domain.interfaces.llm_interface import LLMInterface
 from app.infrastructure.llm.llama_engine import LlamaEngine
 from app.infrastructure.llm.llama_mapper import msg_list_to_llama_format
+from app.core.config import LLMConfig as Config
 
 
 class AsyncLLamaEngine(LLMInterface):
@@ -22,10 +23,19 @@ class AsyncLLamaEngine(LLMInterface):
             prompt
         )
 
-    ##TODO: complete restore and summarization logic
-
     async def create_restore_completion(self, user_input: str):
         pass
 
     async def create_summarization_completion(self, user_input: str):
         pass
+
+    ##TODO: complete restore and summarization logic
+
+    def count_tokens(self, text: str) -> int:
+        return self.llm.count_tokens(text)
+
+    def get_context_window(self) -> int:
+        return Config.max_context
+
+    def get_reserved_tokens(self) -> int:
+        return Config.reserved_tokens

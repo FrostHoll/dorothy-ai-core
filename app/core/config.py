@@ -7,6 +7,7 @@ class LLMConfig:
     path = "C://Users//almaz//Downloads//gemma-2-9b-it-abliterated-Q3_K_M.gguf"
     gpu_layers = 20
     max_context = 2048
+    reserved_tokens = 128
     completion_temp = 0.4
     summarization_temp = 0.2
 
@@ -14,3 +15,7 @@ class LLMConfig:
 class PersonaManagerConfig:
     directory = "personas//"
     persona_file = "persona.json"
+
+
+class MemoryConfig:
+    db_name = "memory.db"
