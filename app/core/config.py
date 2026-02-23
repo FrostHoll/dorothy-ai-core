@@ -19,3 +19,6 @@ class PersonaManagerConfig:
 
 class MemoryConfig:
     db_name = "memory.db"
+
+class EmbeddingConfig:
+    embedding_dim = 384
