@@ -13,11 +13,7 @@ def register_routes() -> APIRouter:
     async def chat(request: ChatRequest, container: ContainerDep, uow: UOWDep):
         use_case = container.generate_response
         use_case.uow = uow
-        try:
-            result = await use_case.execute(request.message, request.conversation_id)
-        except ValueError:
-            print("Incorrect UUID.")
-            result = "Incorrect conversation ID."
-        return ChatResponse(response=result)
+        response, created_at = await use_case.execute(request.message, request.conversation_id)
+        return ChatResponse(response=response, conversation_id=request.conversation_id, created_at=created_at)
 
     return router

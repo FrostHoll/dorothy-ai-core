@@ -14,7 +14,7 @@ class GenerateResponseUseCase:
         self.llm = llm
         self.prompt_builder = prompt_builder
 
-    async def execute(self, user_input: str, conversation_id: str) -> str:
+    async def execute(self, user_input: str, conversation_id: str) -> tuple[str, datetime]:
         async with self.uow as uow:
             user_input_tokens = self.llm.count_tokens(user_input)
             token_budget = self.llm.get_context_window() - self.llm.get_reserved_tokens() - user_input_tokens
@@ -26,23 +26,24 @@ class GenerateResponseUseCase:
                 user_message,
                 msg
             ], conversation_id)
+            created_at = datetime.now()
             new_chat: bool = await uow.conversations.get(conversation_id) is None
             if new_chat:
                 conversation = Conversation(
                     id=conversation_id,
                     title=f"Chat {conversation_id}",
                     last_user_message=user_input,
-                    last_updated_at=datetime.now()
+                    last_updated_at=created_at
                 )
                 await uow.conversations.add(conversation)
             else:
                 await uow.conversations.update_last_info(
                     conversation_id,
                     user_input,
-                    datetime.now()
+                    created_at
                 )
 
-            return response
+            return response, created_at
 
 class PreviewContextWindowUseCase:
     uow: AbstractUnitOfWork

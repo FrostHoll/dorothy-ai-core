@@ -12,7 +12,7 @@ class SQLiteMessageRepository(MessageRepository):
     async def get_recent(self, conversation_id: str) -> list[Message]:
         convo_id = str(conversation_id)
         cursor = await self.connection.execute('''
-                SELECT role, content, token_count FROM Memory
+                SELECT role, content, token_count, created_at FROM Memory
                 WHERE conversation_id = ?
                 ORDER BY created_at ASC
                 LIMIT 50
@@ -78,5 +78,6 @@ class SQLiteMessageRepository(MessageRepository):
         return Message(
             role=message_obj['role'],
             content=message_obj['content'],
-            token_count=message_obj['token_count']
+            token_count=message_obj['token_count'],
+            created_at=message_obj['created_at']
         )

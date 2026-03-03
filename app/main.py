@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
 from app.application.container import create_container
@@ -8,9 +9,21 @@ from app.domain.exceptions import DomainException
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:8000"
+]
+
 @app.on_event("startup")
 async def startup():
     app.state.container = create_container()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 app.include_router(register_chat_routes())
 app.include_router(register_conversations_routes())
