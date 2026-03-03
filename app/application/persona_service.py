@@ -4,7 +4,7 @@ from app.domain.entities.persona import Persona
 from app.core.config import PersonaManagerConfig as Config
 
 
-class PersonaManager:
+class PersonaService:
     def __init__(self):
         self.current_persona: Persona | None = None
 

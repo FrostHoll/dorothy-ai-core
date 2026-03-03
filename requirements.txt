@@ -4,4 +4,5 @@ pydantic~=2.12.5
 llama-cpp-python
 aiosqlite~=0.22.1
 numpy~=2.2.6
-faiss-cpu
+faiss-cpu~=1.13.2
+starlette~=0.52.1

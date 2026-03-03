@@ -1,22 +1,20 @@
-import uuid
-
 from fastapi import APIRouter
 
-from app.api.dependencies import MemoryManagerDep
+from app.api.dependencies import ContainerDep, UOWDep
 from app.api.schemas import ChatResponse, ChatRequest
 
 
-def register_routes(container) -> APIRouter:
+def register_routes() -> APIRouter:
 
     router = APIRouter(prefix="/chat", tags=["chat"])
 
 
     @router.post("/", response_model=ChatResponse)
-    async def chat(request: ChatRequest, memory_manager: MemoryManagerDep):
-        use_case = container["generate_response"]
+    async def chat(request: ChatRequest, container: ContainerDep, uow: UOWDep):
+        use_case = container.generate_response
+        use_case.uow = uow
         try:
-            convo_id = uuid.UUID(request.conversation_id)
-            result = await use_case.execute(request.message, memory_manager, convo_id)
+            result = await use_case.execute(request.message, request.conversation_id)
         except ValueError:
             print("Incorrect UUID.")
             result = "Incorrect conversation ID."
