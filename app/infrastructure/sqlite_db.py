@@ -19,6 +19,8 @@ async def create_tables(db: aiosqlite.Connection):
     await db.execute('''
                 CREATE TABLE IF NOT EXISTS Conversation (
                 id TEXT PRIMARY KEY,
+                platform TEXT,
+                external_id TEXT,
                 title TEXT,
                 last_user_message TEXT,
                 last_updated_at DATETIME)

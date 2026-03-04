@@ -3,6 +3,14 @@ from app.domain.entities.conversation import Conversation
 from app.domain.entities.message import Message
 from app.domain.exceptions import TooLongTitleException
 
+class GetNewIdUseCase:
+    def __init__(self, uow: AbstractUnitOfWork):
+        self.uow = uow
+
+    async def execute(self):
+        async with self.uow as uow:
+            return await uow.conversations.get_new_id()
+
 
 class GetAllConversationsUseCase:
     def __init__(self, uow: AbstractUnitOfWork):

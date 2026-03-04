@@ -5,7 +5,8 @@ from app.domain.entities.message import Message
 
 
 class ChatRequest(BaseModel):
-    conversation_id: str
+    platform: str
+    external_id: str
     message: str
 
 class ChatResponse(BaseModel):

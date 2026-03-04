@@ -7,11 +7,19 @@ from app.domain.entities.conversation import Conversation
 
 class ConversationRepository(ABC):
     @abstractmethod
+    async def get_new_id(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
     async def add(self, conversation: Conversation) -> None:
         raise NotImplementedError
 
     @abstractmethod
     async def get(self, conversation_id: str) -> Optional[Conversation]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_id_by_metadata(self, platform: str, external_id: str) -> Optional[str]:
         raise NotImplementedError
 
     @abstractmethod
