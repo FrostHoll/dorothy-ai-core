@@ -54,6 +54,13 @@ class SQLiteConversationsRepository(ConversationRepository):
             DELETE FROM Conversation
         ''')
 
+    async def update_title(self, conversation_id: str, new_title: str) -> None:
+        await self.connection.execute('''
+            UPDATE Conversation
+            SET title = ?
+            WHERE id = ?
+        ''', (new_title, conversation_id))
+
     @staticmethod
     def _row_to_conversation(convo_obj) -> Conversation:
         return Conversation(id=convo_obj['id'],

@@ -1,6 +1,7 @@
 from app.application.unit_of_work import AbstractUnitOfWork
 from app.domain.entities.conversation import Conversation
 from app.domain.entities.message import Message
+from app.domain.exceptions import TooLongTitleException
 
 
 class GetAllConversationsUseCase:
@@ -38,3 +39,13 @@ class DeleteAllConversationsUseCase:
         async with self.uow as uow:
             await uow.messages.delete_all_conversations()
             await uow.conversations.delete_all()
+
+class EditConversationTitleUseCase:
+    def __init__(self, uow: AbstractUnitOfWork):
+        self.uow = uow
+
+    async def execute(self, conversation_id: str, new_title: str) -> None:
+        if len(new_title) > 30:
+            raise TooLongTitleException(title=new_title)
+        async with self.uow as uow:
+            await uow.conversations.update_title(conversation_id, new_title)

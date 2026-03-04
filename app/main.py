@@ -7,7 +7,10 @@ from app.api.routers.chat import register_routes as register_chat_routes
 from app.api.routers.conversations import register_routes as register_conversations_routes
 from app.domain.exceptions import DomainException
 
-app = FastAPI()
+app = FastAPI(
+    title="Dorothy Core API",
+    version="0.1"
+)
 
 origins = [
     "http://localhost:8000"

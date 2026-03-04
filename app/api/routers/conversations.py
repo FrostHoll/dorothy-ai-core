@@ -1,11 +1,14 @@
 from uuid import uuid4
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from starlette import status
 
 from app.api.dependencies import UOWDep, ContainerDep
-from app.api.schemas import ConversationStartResponse, ConversationsGetAllResponse, ConversationGetResponse
+from app.api.schemas import ConversationStartResponse, ConversationsGetAllResponse, ConversationGetResponse, \
+    ConversationEditTitleRequest
 from app.application.message_use_cases import GetAllConversationsUseCase, GetConversationUseCase, \
-    DeleteConversationUseCase, DeleteAllConversationsUseCase
+    DeleteConversationUseCase, DeleteAllConversationsUseCase, EditConversationTitleUseCase
+from app.domain.exceptions import TooLongTitleException
 
 
 def register_routes() -> APIRouter:
@@ -45,5 +48,15 @@ def register_routes() -> APIRouter:
         use_case = DeleteAllConversationsUseCase(uow)
         await use_case.execute()
         return "All conversations have been deleted."
+
+    @router.patch(path="/{conversation_id}")
+    async def edit_title(conversation_id: str, request: ConversationEditTitleRequest, uow: UOWDep):
+        use_case = EditConversationTitleUseCase(uow)
+        try:
+            await use_case.execute(conversation_id, request.title)
+        except TooLongTitleException as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        return request.title
+
 
     return router

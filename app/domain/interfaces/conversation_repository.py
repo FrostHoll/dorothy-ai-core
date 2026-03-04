@@ -19,7 +19,11 @@ class ConversationRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def update_last_info(self, conversation_id: str, last_user_message: str, last_updated_at: datetime):
+    async def update_last_info(self, conversation_id: str, last_user_message: str, last_updated_at: datetime) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update_title(self, conversation_id: str, new_title: str) -> None:
         raise NotImplementedError
 
     @abstractmethod

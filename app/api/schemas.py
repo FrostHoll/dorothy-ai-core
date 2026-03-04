@@ -21,3 +21,6 @@ class ConversationStartResponse(BaseModel):
 
 class ConversationsGetAllResponse(BaseModel):
     conversations: list[Conversation]
+
+class ConversationEditTitleRequest(BaseModel):
+    title: str
