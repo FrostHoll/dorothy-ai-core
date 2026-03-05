@@ -8,3 +8,4 @@ faiss-cpu~=1.13.2
 starlette~=0.52.1
 discord~=2.3.2
 discord.py~=2.7.1
+httpx~=0.28.1
