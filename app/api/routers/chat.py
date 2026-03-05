@@ -13,7 +13,7 @@ def register_routes() -> APIRouter:
     async def chat(request: ChatRequest, container: ContainerDep, uow: UOWDep):
         use_case = container.generate_response
         use_case.uow = uow
-        response, created_at = await use_case.execute(request.message, request.conversation_id)
-        return ChatResponse(response=response, conversation_id=request.conversation_id, created_at=created_at)
+        response, conversation_id, created_at = await use_case.execute(request.message, request.platform, request.external_id)
+        return ChatResponse(response=response, conversation_id=conversation_id, created_at=created_at)
 
     return router

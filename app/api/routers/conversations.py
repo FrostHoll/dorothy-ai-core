@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
@@ -7,7 +5,7 @@ from app.api.dependencies import UOWDep, ContainerDep
 from app.api.schemas import ConversationStartResponse, ConversationsGetAllResponse, ConversationGetResponse, \
     ConversationEditTitleRequest
 from app.application.message_use_cases import GetAllConversationsUseCase, GetConversationUseCase, \
-    DeleteConversationUseCase, DeleteAllConversationsUseCase, EditConversationTitleUseCase
+    DeleteConversationUseCase, DeleteAllConversationsUseCase, EditConversationTitleUseCase, GetNewIdUseCase
 from app.domain.exceptions import TooLongTitleException
 
 
@@ -15,8 +13,10 @@ def register_routes() -> APIRouter:
     router = APIRouter(prefix="/conversations", tags=["conversations"])
 
     @router.post(path="/", response_model=ConversationStartResponse)
-    async def start_conversation():
-        return ConversationStartResponse(conversation_id=str(uuid4()))
+    async def start_conversation(uow: UOWDep):
+        use_case = GetNewIdUseCase(uow)
+        new_id = await use_case.execute()
+        return ConversationStartResponse(conversation_id=new_id)
 
     @router.get(path="/", response_model=ConversationsGetAllResponse)
     async def get_all_conversations(uow: UOWDep):
