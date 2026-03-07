@@ -22,7 +22,8 @@ class GenerateResponseUseCase:
                 conversation_id = await uow.conversations.get_new_id()
                 new_chat = True
             user_input_tokens = self.llm.count_tokens(user_input)
-            token_budget = self.llm.get_context_window() - self.llm.get_reserved_tokens() - user_input_tokens
+            system_prompt_tokens = self.llm.count_tokens(self.prompt_builder.persona_manager.get_persona().system_prompt)
+            token_budget = self.llm.get_context_window() - self.llm.get_reserved_tokens() - user_input_tokens - system_prompt_tokens
             user_message = Message(role="user", content=user_input, token_count=user_input_tokens)
             messages = await self.prompt_builder.build(user_message, uow.messages, conversation_id, token_budget)
             msg, response, _ = await self.llm.create_chat_completion(messages)
@@ -60,7 +61,9 @@ class PreviewContextWindowUseCase:
 
     async def execute(self, conversation_id: str) -> list[Message]:
         async with self.uow as uow:
-            token_budget = self.llm.get_context_window() - self.llm.get_reserved_tokens()
+            system_prompt_tokens = self.llm.count_tokens(
+                self.prompt_builder.persona_manager.get_persona().system_prompt)
+            token_budget = self.llm.get_context_window() - self.llm.get_reserved_tokens() - system_prompt_tokens
             user_message = Message(role="user", content="")
             messages = await self.prompt_builder.build(user_message, uow.messages, conversation_id, token_budget)
 

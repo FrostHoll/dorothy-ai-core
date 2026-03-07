@@ -4,8 +4,6 @@ from llama_cpp import Llama
 
 from app.core.config import LLMConfig as Config
 from app.domain.entities.message import Message
-from app.infrastructure.llm.llama_mapper import wrap_text_to_llama_format
-
 
 class LlamaEngine:
     def __init__(self):
@@ -39,7 +37,6 @@ class LlamaEngine:
         for i in prompt:
             prompt_tokens += len(self.model.tokenize(text = i["content"].encode("utf-8")))
         start_time = time.time()
-
         for token in self._create_chat_completion(prompt):
             if token.strip():
                 total_tokens_generated += 1
@@ -47,6 +44,7 @@ class LlamaEngine:
         end_time = time.time()
         total_tokens = total_tokens_generated + prompt_tokens
         text = self.generated_text.strip()
+        print(f"[LLM]: Prompt tokens: {prompt_tokens} Generated tokens: {total_tokens_generated} Total: {total_tokens}/{Config.max_context}")
         print(f"[LLM]: Response:({text}) Generation time: {end_time - start_time:.2f} s")
         return Message(role="assistant", content=text, token_count=total_tokens_generated), self.generated_text, total_tokens
 
