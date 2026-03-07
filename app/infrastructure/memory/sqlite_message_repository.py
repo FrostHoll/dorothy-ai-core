@@ -15,7 +15,6 @@ class SQLiteMessageRepository(MessageRepository):
                 SELECT role, content, token_count, created_at FROM Memory
                 WHERE conversation_id = ?
                 ORDER BY created_at ASC
-                LIMIT 50
         ''', (convo_id,))
         rows = await cursor.fetchall()
         await cursor.close()
@@ -29,6 +28,7 @@ class SQLiteMessageRepository(MessageRepository):
         for msg in reversed(messages):
             if total_tokens + msg.token_count <= token_budget:
                 result.append(msg)
+                total_tokens += msg.token_count
             else:
                 break
         result.reverse()

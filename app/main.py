@@ -35,6 +35,6 @@ app.include_router(register_conversations_routes())
 async def domain_exception_handler(request: Request, exc: DomainException):
     return JSONResponse(status_code=400, content={"detail": str(exc)})
 
-@app.get("/")
+@app.get("/health")
 def root():
     return {"message": "Dorothy Core is running."}
