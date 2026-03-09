@@ -4,9 +4,10 @@ import httpx
 
 from discord_service.config import settings
 
-class CoreClient:
+
+class VoiceOrchestratorClient:
     def __init__(self):
-        self.base_url = settings.core_client_base_url
+        self.base_url = settings.voice_orchestrator_base_url
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
             timeout=60.0,
@@ -19,22 +20,23 @@ class CoreClient:
             response.raise_for_status()
             return True
         except Exception as e:
-            print(f"[CoreClient]: Error: {str(e)}")
+            print(f"[VoiceOrchestratorClient]: Error: {str(e)}")
             return False
 
-    async def generate_response(self, user_input: str, external_id: str) -> Optional[str]:
+    async def request_response(self, wav_data: bytes, external_id: str) -> Optional[str]:
         if not await self.health_check():
             return None
         try:
-            payload = {
-                "platform": "discord",
-                "external_id": external_id,
-                "message": user_input
+            files = {
+                "audio_file": ("voice.wav", wav_data, 'audio/wav')
             }
-            response = await self.client.post("/chat", json=payload)
+            payload = {
+                "external_id": external_id,
+                "voice_session_id": 1234
+            }
+            response = await self.client.post("/voice/process", files=files, json=payload)
             response.raise_for_status()
-            reply = response.json()['response']
-            return reply
+            return "OK"
         except Exception as e:
             print(f"[CoreClient]: Error: {str(e)}")
             return None
