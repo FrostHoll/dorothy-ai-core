@@ -9,6 +9,7 @@ from discord_service.voice.voice_manager import VoiceManager
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.voice_states = True
 
 core_client = CoreClient()
 voice_orc_client = VoiceOrchestratorClient()

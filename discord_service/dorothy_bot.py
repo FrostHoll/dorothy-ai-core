@@ -23,7 +23,8 @@ class DorothyBot(discord.Client):
 
         voice_commands_setup(self.tree, self.voice_manager)
 
-        GUILD_ID = 1455226648948637709
+        #GUILD_ID = 1455226648948637709
+        GUILD_ID = 621369145862389760
 
         guild = discord.Object(id=GUILD_ID)
         self.tree.copy_global_to(guild=guild)

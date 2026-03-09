@@ -20,6 +20,7 @@ class VoiceSession:
         if self.is_recording:
             return None
         self.buffer.clear()
+        self.listener.reset_packets()
         self.is_recording = True
         self.listener.is_recording = True
         print("[VoiceSession]: Start listening...")
@@ -32,9 +33,6 @@ class VoiceSession:
 
 
             try:
-                with open("E:\\test.raw", 'wb') as wf:
-                    wf.write(wav_data)
-                    print("file saved")
 
                 with wave.open("E:\\test.wav", 'wb') as wf:
                     wf.setnchannels(2)
