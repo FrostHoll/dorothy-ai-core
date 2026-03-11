@@ -13,7 +13,6 @@ class DorothyBot(discord.Client):
         self.mention_handler = mention_handler
         self.voice_manager = voice_manager
         self.tree = app_commands.CommandTree(self)
-        self.tag = ""
 
     async def on_ready(self) -> None:
         print(f"Logged in as {self.user} ID: {self.user.id}")
@@ -23,8 +22,8 @@ class DorothyBot(discord.Client):
 
         voice_commands_setup(self.tree, self.voice_manager)
 
-        #GUILD_ID = 1455226648948637709
-        GUILD_ID = 621369145862389760
+        #GUILD_ID = 1455226648948637709 # Developer's Lair
+        GUILD_ID = 621369145862389760 # Red Ufa Gang
 
         guild = discord.Object(id=GUILD_ID)
         self.tree.copy_global_to(guild=guild)
@@ -36,8 +35,6 @@ class DorothyBot(discord.Client):
     async def on_message(self, message: discord.Message) -> None:
         if message.author.id == self.user.id:
             return
-        if self.tag == "":
-            self.tag = f"<@{self.user.id}>"
-        if self.tag in message.content:
+        if self.user.mention in message.content:
             await self.mention_handler.handle(message,
-                                              message.content.replace(self.tag, "").strip())
+                                              message.content.replace(self.user.mention, "").strip())

@@ -9,7 +9,7 @@ class CoreClient:
         self.base_url = settings.core_client_base_url
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
-            timeout=60.0,
+            timeout=240.0,
             follow_redirects=True
         )
 
