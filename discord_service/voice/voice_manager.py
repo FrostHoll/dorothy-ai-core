@@ -1,3 +1,5 @@
+import asyncio
+
 import discord.channel
 from discord import Guild
 from discord.ext.voice_recv import VoiceRecvClient
@@ -44,12 +46,27 @@ class VoiceManager:
 
         session: VoiceSession = self.sessions[guild_id]
 
-        wav = await session.listen(duration)
+        records = await session.listen(duration)
+        asyncio.create_task(self.poll_result(session))
 
-        if wav:
-            response = await self.voice_orc_client.request_response(
-                wav,
-                ExternalIDCompiler.compile(user_id, channel_id, guild_id)
-            )
-            return response
+        if records:
+            for rec in records:
+                if rec.pcm_frames:
+                    response = await self.voice_orc_client.request_process(
+                        voice_session_id=session.session_id,
+                        external_id=ExternalIDCompiler.compile(user_id, channel_id, guild_id),
+                        audio_record=rec
+                    )
+            return "queued"
         return None
+
+    async def on_stt_result(self, result: str):
+        print(f"Got STT result: {result}")
+
+    async def poll_result(self, session: VoiceSession):
+        while session.is_pending_result:
+            await asyncio.sleep(3.0)
+            result = await self.voice_orc_client.poll_result(session.session_id)
+            if result:
+                session.is_pending_result = False
+                await self.on_stt_result(result)

@@ -27,16 +27,17 @@ class AudioListener(AudioSink):
         return True
 
     def write(self, user, data: VoiceData) -> None:
+
         if not self.is_recording:
             return
-        if self.packets < 20:
+        if self.packets < 50:
             self.packets += 1
             return
         if data.packet:
             try:
                 opus_frame = data.packet.decrypted_data
                 pcm_frame = self.decoder.decode(opus_frame, frame_size=960)
-                self.buffer.add_frame(pcm_frame)
+                self.buffer.add_user_frame(user.id, user.name, pcm_frame)
             except opuslib.OpusError:
                 pass
 
