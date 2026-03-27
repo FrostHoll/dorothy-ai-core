@@ -60,8 +60,9 @@ class VoiceManager:
             return "queued"
         return None
 
-    async def on_stt_result(self, result: str):
-        print(f"Got STT result: {result}")
+    async def on_stt_result(self, session: VoiceSession, result: str):
+
+        print(f"Got Voice Orchestrator result: {result}")
 
     async def poll_result(self, session: VoiceSession):
         while session.is_pending_result:
@@ -69,4 +70,4 @@ class VoiceManager:
             result = await self.voice_orc_client.poll_result(session.session_id)
             if result:
                 session.is_pending_result = False
-                await self.on_stt_result(result)
+                await self.on_stt_result(session, result)

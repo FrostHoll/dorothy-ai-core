@@ -11,3 +11,7 @@ discord.py[voice]
 discord-ext-voice-recv
 httpx
 opuslib
+python-multipart
+openai-whisper
+resampy
+typing_extensions

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from voice_orchestrator.application.voice_use_cases import VoiceProcessUseCase, PollResultUseCase
+from voice_orchestrator.http_clients.stt_client import STTClient
 from voice_orchestrator.voice.voice_session_manager import VoiceSessionManager
 
 
@@ -10,7 +11,8 @@ class Container:
     poll_result: PollResultUseCase
 
 def create_container() -> Container:
-    voice_session_manager = VoiceSessionManager()
+    stt_client = STTClient()
+    voice_session_manager = VoiceSessionManager(stt_client)
 
     return Container(
         voice_process=VoiceProcessUseCase(voice_session_manager),

@@ -1,0 +1,52 @@
+import asyncio
+import os.path
+import tempfile
+import numpy as np
+import resampy
+import whisper
+
+from stt_service.api.schemas import JobStatus
+from stt_service.core.queue import get_queue
+from stt_service.core.store import get_job
+
+_model = whisper.load_model("tiny")
+
+async def transcription_worker() -> None:
+    queue = get_queue()
+    loop = asyncio.get_event_loop()
+
+    while True:
+        job_id: str = await queue.get()
+        job = get_job(job_id)
+        print(f"got job: {job.job_id}")
+        if job is None:
+            queue.task_done()
+            continue
+
+        job.status = JobStatus.processing
+        print("processing job...")
+        try:
+            result = await loop.run_in_executor(
+                None,
+                _transcribe,
+                job.audio_bytes
+            )
+            job.text = f"{job.user_name}: {result}"
+            job.status = JobStatus.done
+        except Exception as e:
+            job.error = str(e)
+            job.status = JobStatus.failed
+        finally:
+            queue.task_done()
+
+def _transcribe(audio_bytes: bytes) -> str | None:
+    audio = np.frombuffer(audio_bytes, dtype=np.int16)
+    audio = audio.reshape(-1, 2)
+    mono = audio.mean(axis=1).astype(np.float32)
+
+    audio_16k = resampy.resample(mono, 48000, 16000)
+    audio_16k = audio_16k / 32768.0
+
+    result = _model.transcribe(audio=audio_16k)
+    print(f"job is done: {result['text']}")
+    return result['text']

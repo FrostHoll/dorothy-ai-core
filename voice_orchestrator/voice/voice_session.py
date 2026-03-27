@@ -19,3 +19,11 @@ class VoiceSession:
         self.created_at = time.time()
 
         self.result = None
+
+    def reset(self):
+        if self.state != VoiceSessionState.DONE:
+            return
+        self.state = VoiceSessionState.COLLECTING
+        self.segments.clear()
+        self.messages.clear()
+        self.result = None

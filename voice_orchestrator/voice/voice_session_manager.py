@@ -1,16 +1,17 @@
 import asyncio
 import time
-import threading
 
+from voice_orchestrator.http_clients.stt_client import STTClient
 from voice_orchestrator.voice.voice_segment import VoiceSegment
 from voice_orchestrator.voice.voice_session import VoiceSession
 from voice_orchestrator.voice.voice_session_state import VoiceSessionState
 
 
 class VoiceSessionManager:
-    def __init__(self):
+    def __init__(self, stt_client: STTClient):
         self.sessions: dict[str, VoiceSession] = {}
         self.silence_timeout = 3.0
+        self.stt_client = stt_client
 
     def get_or_create(self, session_id: str, external_id: str) -> VoiceSession:
         if session_id not in self.sessions:
@@ -19,6 +20,9 @@ class VoiceSessionManager:
 
     async def add_segment(self, session_id: str, external_id: str, segment: VoiceSegment) -> None:
         session = self.get_or_create(session_id, external_id)
+
+        if session.state == VoiceSessionState.DONE:
+            session.reset()
 
         if session.state != VoiceSessionState.COLLECTING:
             return
@@ -30,15 +34,17 @@ class VoiceSessionManager:
         await self.enqueue_stt(session, segment)
 
     async def enqueue_stt(self, session: VoiceSession, segment: VoiceSegment) -> None:
-        ## --- TEST ---
         print("sending to stt...")
-        asyncio.create_task(self.mock_stt_response(session.session_id, f"[Transcribed text for {segment.user_name}]"))
+        job_id = await self.stt_client.enqueue_segment(segment.pcm_48k, segment.user_name)
+        asyncio.create_task(self.poll_result(session, job_id))
 
-    async def mock_stt_response(self, session_id: str, text: str):
-        print("got audio")
-        await asyncio.sleep(4.0)
-        print("sending mock transcribe")
-        await self.on_stt_result(session_id, text)
+    async def poll_result(self, session: VoiceSession, job_id: str) -> None:
+        while True:
+            await asyncio.sleep(3.0)
+            result = await self.stt_client.poll_result(job_id)
+            if result:
+                await self.on_stt_result(session.session_id, result)
+                return
 
     async def on_stt_result(self, session_id: str, text: str):
         session = self.sessions[session_id]
