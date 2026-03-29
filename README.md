@@ -1,5 +1,5 @@
 # Dorothy AI
-<p align="center"> <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python" alt="Python"/> <img src="https://img.shields.io/badge/FastAPI-0.104-green?logo=fastapi" alt="FastAPI"/> <img src="https://img.shields.io/badge/LLM-llama.cpp-orange" alt="LLM"/> <img src="https://img.shields.io/badge/ASR-Whisper-yellow" alt="Whisper"/> <img src="https://img.shields.io/badge/TTS-Coqui%20AI-purple" alt="TTS"/> <img src="https://img.shields.io/badge/Discord.py-2.3-blueviolet" alt="Discord"/> <img src="https://img.shields.io/badge/Status-Development-lightgrey" alt="Status"/></p>
+<p align="center"> <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python" alt="Python"/> <img src="https://img.shields.io/badge/FastAPI-0.104-green?logo=fastapi" alt="FastAPI"/> <img src="https://img.shields.io/badge/LLM-llama.cpp-orange" alt="LLM"/> <img src="https://img.shields.io/badge/ASR-Whisper-yellow" alt="Whisper"/> <img src="https://img.shields.io/badge/TTS-Silero-purple" alt="TTS"/> <img src="https://img.shields.io/badge/Discord.py-2.7-blueviolet" alt="Discord"/> <img src="https://img.shields.io/badge/Status-Development-lightgrey" alt="Status"/></p>
 
 ## Оглавление
 
@@ -27,7 +27,7 @@
 
 Асинхронное взаимодействие (HTTP + планируется gRPC/Message Broker).
 
-Интеграция SOTA-моделей (LLM, Whisper, Coqui TTS).
+Интеграция SOTA-моделей (LLM, Whisper, Silero TTS).
 
 Контейнеризация и оркестрация (Docker Compose).
 
@@ -87,7 +87,7 @@
 
 Технологии: FastAPI, python-multipart, aiohttp.
 
-4. STT (Speech-to-Text) (WIP)
+4. STT (Speech-to-Text)
 
 Роль: Преобразование речи в текст.
 
@@ -97,21 +97,21 @@
 
 Технологии: FastAPI, faster-whisper.
 
-5. TTS (Text-to-Speech) (WIP)
+5. TTS (Text-to-Speech)
 
 Роль: Озвучивание ответов.
 
 **Функции:**
 
-Синтез речи из текста с помощью модели Coqui AI.
+Синтез речи из текста с помощью модели Silero TTS.
 
-Технологии: FastAPI, TTS (Coqui).
+Технологии: FastAPI, TTS (Silero).
 
 ## Технологический стек
 
 Backend: Python 3.11, FastAPI, Uvicorn
 
-Модели ИИ: LLaMA (через llama.cpp), OpenAI Whisper, Coqui TTS
+Модели ИИ: LLaMA (через llama.cpp), OpenAI Whisper, Silero TTS
 
 База данных: SQLite (для хранения памяти/истории)
 
@@ -120,12 +120,6 @@ Backend: Python 3.11, FastAPI, Uvicorn
 Инфраструктура: Docker, Docker Compose, Git
 
 ## Roadmap / Планы по развитию
-
-- Базовая текстовая коммуникация через Discord.
-
-- Интеграция STT (Whisper).
-
-- Интеграция TTS (Coqui).
 
 - Внедрение асинхронной очереди (RabbitMQ/Kafka) для отвязки оркестратора от синхронных вызовов.
 
