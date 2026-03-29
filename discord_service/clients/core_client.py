@@ -9,13 +9,13 @@ class CoreClient:
         self.base_url = settings.core_client_base_url
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
-            timeout=60.0,
+            timeout=240.0,
             follow_redirects=True
         )
 
     async def health_check(self) -> bool:
         try:
-            response = await self.client.get("/")
+            response = await self.client.get("/health")
             response.raise_for_status()
             return True
         except Exception as e:

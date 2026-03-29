@@ -9,6 +9,7 @@ class LlamaEngine:
     def __init__(self):
         self.model = Llama(
             model_path = Config.path,
+            n_gpu_layers=Config.gpu_layers,
             n_ctx = Config.max_context,
             verbose = False
         )
@@ -19,6 +20,7 @@ class LlamaEngine:
         stream = self.model.create_chat_completion(
             messages=prompt,
             temperature=Config.completion_temp,
+            repeat_penalty=1.1,
             stream=True
         )
 
@@ -43,7 +45,7 @@ class LlamaEngine:
 
         end_time = time.time()
         total_tokens = total_tokens_generated + prompt_tokens
-        text = self.generated_text.strip()
+        text = " ".join((self.generated_text.strip()).split())
         print(f"[LLM]: Prompt tokens: {prompt_tokens} Generated tokens: {total_tokens_generated} Total: {total_tokens}/{Config.max_context}")
         print(f"[LLM]: Response:({text}) Generation time: {end_time - start_time:.2f} s")
         return Message(role="assistant", content=text, token_count=total_tokens_generated), self.generated_text, total_tokens
