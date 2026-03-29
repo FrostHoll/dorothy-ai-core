@@ -6,7 +6,3 @@ class VoiceProcessResponse(BaseModel):
     response_text: str
     latency_ms: int
     audio_base64: str
-
-class PollResultResponse(BaseModel):
-    status: str
-    result: str | None

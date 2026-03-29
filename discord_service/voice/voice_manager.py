@@ -1,4 +1,5 @@
 import asyncio
+import io
 
 import discord.channel
 from discord import Guild
@@ -60,9 +61,21 @@ class VoiceManager:
             return "queued"
         return None
 
-    async def on_stt_result(self, session: VoiceSession, result: str):
+    async def on_orchestrator_result(self, session: VoiceSession, result: bytes):
 
-        print(f"Got Voice Orchestrator result: {result}")
+        print(f"Got Voice Orchestrator result")
+        buf = io.BytesIO(result)
+
+        audio_source = discord.FFmpegPCMAudio(
+            buf,
+            pipe=True,
+            options="-vn"
+        )
+
+        vc = session.voice_client
+        if vc.is_playing():
+            vc.stop_playing()
+        vc.play(audio_source)
 
     async def poll_result(self, session: VoiceSession):
         while session.is_pending_result:
@@ -70,4 +83,4 @@ class VoiceManager:
             result = await self.voice_orc_client.poll_result(session.session_id)
             if result:
                 session.is_pending_result = False
-                await self.on_stt_result(session, result)
+                await self.on_orchestrator_result(session, result)

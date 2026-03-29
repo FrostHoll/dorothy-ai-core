@@ -15,7 +15,7 @@ class PollResultUseCase:
     def __init__(self, voice_session_manager: VoiceSessionManager):
         self.manager = voice_session_manager
 
-    async def execute(self, session_id: str) -> tuple[str, str | None]:
+    async def execute(self, session_id: str) -> tuple[str, bytes | None]:
         if session_id not in self.manager.sessions:
             return "not found", None
 

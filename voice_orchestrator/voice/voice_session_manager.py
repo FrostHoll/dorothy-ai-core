@@ -1,17 +1,21 @@
 import asyncio
 import time
 
+from voice_orchestrator.http_clients.core_client import CoreClient
 from voice_orchestrator.http_clients.stt_client import STTClient
+from voice_orchestrator.http_clients.tts_client import TTSClient
 from voice_orchestrator.voice.voice_segment import VoiceSegment
 from voice_orchestrator.voice.voice_session import VoiceSession
 from voice_orchestrator.voice.voice_session_state import VoiceSessionState
 
 
 class VoiceSessionManager:
-    def __init__(self, stt_client: STTClient):
+    def __init__(self, stt_client: STTClient, core_client: CoreClient, tts_client: TTSClient):
         self.sessions: dict[str, VoiceSession] = {}
         self.silence_timeout = 3.0
         self.stt_client = stt_client
+        self.core_client = core_client
+        self.tts_client = tts_client
 
     def get_or_create(self, session_id: str, external_id: str) -> VoiceSession:
         if session_id not in self.sessions:
@@ -66,11 +70,16 @@ class VoiceSessionManager:
             print("Generating response")
 
             response = await self.generate_response(session)
+            #response = session.messages[0]
 
-            print(f"Sending response: {response}")
-            session.result = response
+            print(f"Got response: {response}")
+
+            audio = await self.tts_client.synthesize(session.session_id, response)
+
+            session.result = audio
             session.state = VoiceSessionState.DONE
 
     async def generate_response(self, session: VoiceSession):
-        await asyncio.sleep(2.0)
-        return f"[Generated response for {session.messages}]"
+        message = "\n".join(session.messages)
+        response = await self.core_client.request_response(session.external_id, message)
+        return response

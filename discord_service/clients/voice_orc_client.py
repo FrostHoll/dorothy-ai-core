@@ -44,17 +44,16 @@ class VoiceOrchestratorClient:
             print(f"[VoiceOrchestratorClient]: Error: {str(e)}")
             return None
 
-    async def poll_result(self, voice_session_id: str) -> Optional[str]:
+    async def poll_result(self, voice_session_id: str) -> Optional[bytes]:
         if not await self.health_check():
             return None
         try:
             response = await self.client.get(f"/voice/poll-result/{voice_session_id}")
             response.raise_for_status()
-            status: str = response.json()['status']
-            result: str | None = None
-            if status == "done":
-                result = response.json()['result']
-            return result
+            if response.headers["content-type"] == "audio/wav":
+                return response.content
+            else:
+                return None
         except Exception as e:
             print(f"[VoiceOrchestratorClient]: Error: {str(e)}")
             return None

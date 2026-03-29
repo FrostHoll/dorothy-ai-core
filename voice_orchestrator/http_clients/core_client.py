@@ -6,7 +6,8 @@ class CoreClient:
     def __init__(self):
         self.client = httpx.AsyncClient(
             base_url="http://localhost:8080",
-            timeout=60.0
+            timeout=60.0,
+            follow_redirects=True
         )
 
     async def check_health(self) -> bool:
