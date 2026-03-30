@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, UploadFile, Form
 
 from voice_orchestrator.api.dependencies import ContainerDep
 from fastapi.responses import Response
+import base64
 
 
 def register_routes() -> APIRouter:
@@ -37,14 +38,20 @@ def register_routes() -> APIRouter:
 
     @router.get(path="/poll-result/{voice_session_id}")
     async def poll_result(container: ContainerDep, voice_session_id: str):
-        use_case = container.poll_result
-        response = await use_case.execute(voice_session_id)
+        poll_result_use_case = container.poll_result
+        response = await poll_result_use_case.execute(voice_session_id)
         if response[0] != "done":
             return {"status": "processing"}
+        get_session_results = container.get_session_results
+        transcript, llm_response = await get_session_results.execute(voice_session_id)
         return Response(
             content=response[1],
             media_type="audio/wav",
-            headers={"X-Status": "done"}
+            headers={
+                "X-Status": "done",
+                "X-Transcript": base64.b64encode(transcript.encode('utf-8')).decode('utf-8'),
+                "X-Response-Text": base64.b64encode(llm_response.encode('utf-8')).decode('utf-8')
+            }
         )
 
     return router

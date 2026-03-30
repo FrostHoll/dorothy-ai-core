@@ -1,5 +1,5 @@
 from typing import Optional
-
+import base64
 import httpx
 
 from discord_service.config import settings
@@ -20,8 +20,8 @@ class VoiceOrchestratorClient:
             response = await self.client.get("/health")
             response.raise_for_status()
             return True
-        except Exception as e:
-            print(f"[VoiceOrchestratorClient]: Error: {str(e)}")
+        except httpx.HTTPStatusError as e:
+            print(f"[VoiceOrchestratorClient]: Error: {e.response.json()["detail"]}")
             return False
 
     async def request_process(self, voice_session_id: str, external_id: str, audio_record: AudioDataRecord) -> Optional[str]:
@@ -44,14 +44,16 @@ class VoiceOrchestratorClient:
             print(f"[VoiceOrchestratorClient]: Error: {str(e)}")
             return None
 
-    async def poll_result(self, voice_session_id: str) -> Optional[bytes]:
+    async def poll_result(self, voice_session_id: str) -> Optional[tuple[bytes, str, str]]:
         if not await self.health_check():
             return None
         try:
             response = await self.client.get(f"/voice/poll-result/{voice_session_id}")
             response.raise_for_status()
             if response.headers["content-type"] == "audio/wav":
-                return response.content
+                transcript = base64.b64decode(response.headers["x-transcript"]).decode('utf-8')
+                response_text = base64.b64decode(response.headers["x-response-text"]).decode('utf-8')
+                return response.content, transcript, response_text
             else:
                 return None
         except Exception as e:

@@ -12,6 +12,7 @@ class VoiceSession:
 
         self.segments = []
         self.messages = []
+        self.response = None
 
         self.pending_stt = 0
 
@@ -26,4 +27,5 @@ class VoiceSession:
         self.state = VoiceSessionState.COLLECTING
         self.segments.clear()
         self.messages.clear()
+        self.response = None
         self.result = None

@@ -1,6 +1,6 @@
 import asyncio
 import time
-
+import re
 from voice_orchestrator.http_clients.core_client import CoreClient
 from voice_orchestrator.http_clients.stt_client import STTClient
 from voice_orchestrator.http_clients.tts_client import TTSClient
@@ -44,7 +44,7 @@ class VoiceSessionManager:
 
     async def poll_result(self, session: VoiceSession, job_id: str) -> None:
         while True:
-            await asyncio.sleep(3.0)
+            await asyncio.sleep(2.0)
             result = await self.stt_client.poll_result(job_id)
             if result:
                 await self.on_stt_result(session.session_id, result)
@@ -55,7 +55,10 @@ class VoiceSessionManager:
 
         print(f"Got STT result: {text}")
         session.pending_stt -= 1
-        session.messages.append(text)
+        cleaned = VoiceSessionManager.clean_transcript(text)
+        print(f"Cleaned result: {cleaned}")
+        if cleaned:
+            session.messages.append(cleaned)
 
         await self.maybe_finalize(session)
 
@@ -73,6 +76,7 @@ class VoiceSessionManager:
             #response = session.messages[0]
 
             print(f"Got response: {response}")
+            session.response = response
 
             audio = await self.tts_client.synthesize(session.session_id, response)
 
@@ -83,3 +87,9 @@ class VoiceSessionManager:
         message = "\n".join(session.messages)
         response = await self.core_client.request_response(session.external_id, message)
         return response
+
+    @staticmethod
+    def clean_transcript(text: str) -> str | None:
+        cleaned = re.sub(r"[^а-яёА-ЯЁa-zA-Z0-9\s.,!?;:'\"-]", "", text)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        return cleaned if cleaned else None

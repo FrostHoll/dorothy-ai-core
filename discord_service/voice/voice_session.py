@@ -10,10 +10,12 @@ from discord_service.voice.audio_listener import AudioListener
 
 
 class VoiceSession:
-    def __init__(self, guild_id: int, voice_client: VoiceRecvClient):
+    def __init__(self, guild_id: int, callback_channel, voice_client: VoiceRecvClient):
         self.session_id = str(uuid.uuid4())
         self.guild_id = guild_id
         self.voice_client = voice_client
+        self.callback_channel = callback_channel
+
         self.buffer = AudioBuffer()
         self.listener = AudioListener(self.buffer)
         self.is_recording = False
