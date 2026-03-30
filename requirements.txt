@@ -18,3 +18,5 @@ typing_extensions
 torch
 omegaconf
 scipy
+num2words
+transliterate
