@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 
+from voice_orchestrator.api.dependencies import ContainerDep
 from voice_orchestrator.api.routers.voice import register_routes as register_voice_routes
 from voice_orchestrator.application.container import create_container
 
@@ -28,5 +29,9 @@ async def startup():
 app.include_router(register_voice_routes())
 
 @app.get("/health")
-def root():
+async def root(container: ContainerDep):
+    use_case = container.check_modules
+    result, error_msg = await use_case.execute()
+    if result:
+        raise HTTPException(status_code=500, detail=error_msg)
     return {"message": "Dorothy Voice Orchestrator is running."}

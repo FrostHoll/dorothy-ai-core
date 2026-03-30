@@ -17,14 +17,14 @@ def setup(tree: app_commands.CommandTree, voice_manager: VoiceManager):
                 ephemeral=True
             )
             return
-
-        channel = interaction.user.voice.channel
+        callback_channel = interaction.channel
+        target_vc = interaction.user.voice.channel
         guild = interaction.guild
 
-        await voice_manager.join_channel(guild, channel)
+        await voice_manager.join_channel(guild, callback_channel, target_vc)
 
         await interaction.followup.send(
-            f"Я присоединилась к {channel.name}! 👋",
+            f"Я присоединилась к {target_vc.name}! 👋",
             ephemeral=True)
 
     @voice.command(name="leave", description="Отключиться от голосового канала")
@@ -54,7 +54,7 @@ def setup(tree: app_commands.CommandTree, voice_manager: VoiceManager):
             return
         try:
             response = await voice_manager.listen(interaction.user.id, interaction.channel.id, interaction.guild.id, seconds)
-            await interaction.followup.send(response if response else "ERROR")
+            await interaction.followup.send("Генерирую ответ..." if response else "ERROR")
         except Exception as e:
             await interaction.followup.send(f"Ошибка: {str(e)}")
 

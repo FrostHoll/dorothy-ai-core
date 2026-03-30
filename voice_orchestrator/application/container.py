@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
-from voice_orchestrator.application.voice_use_cases import VoiceProcessUseCase, PollResultUseCase
+from voice_orchestrator.application.voice_use_cases import VoiceProcessUseCase, PollResultUseCase, \
+    GetVoiceSessionResultsUseCase, CheckModulesStatusUseCase
 from voice_orchestrator.http_clients.core_client import CoreClient
 from voice_orchestrator.http_clients.stt_client import STTClient
 from voice_orchestrator.http_clients.tts_client import TTSClient
@@ -11,6 +12,8 @@ from voice_orchestrator.voice.voice_session_manager import VoiceSessionManager
 class Container:
     voice_process: VoiceProcessUseCase
     poll_result: PollResultUseCase
+    get_session_results: GetVoiceSessionResultsUseCase
+    check_modules: CheckModulesStatusUseCase
 
 def create_container() -> Container:
     stt_client = STTClient()
@@ -20,5 +23,7 @@ def create_container() -> Container:
 
     return Container(
         voice_process=VoiceProcessUseCase(voice_session_manager),
-        poll_result=PollResultUseCase(voice_session_manager)
+        poll_result=PollResultUseCase(voice_session_manager),
+        get_session_results=GetVoiceSessionResultsUseCase(voice_session_manager),
+        check_modules=CheckModulesStatusUseCase(stt_client, core_client, tts_client)
     )

@@ -2,6 +2,8 @@ import io
 import numpy as np
 import torch
 from tts_service.config import TTSConfig as Config
+from tts_service.core.preprocessor import Preprocessor
+
 
 class SileroEngine:
     def __init__(self):
@@ -18,10 +20,12 @@ class SileroEngine:
 
     def synthesize(self, text: str) -> io.BytesIO | None:
         print(f"[TTS Service]: Got text: '{text}'")
+        processed_text = Preprocessor.preprocess(text)
+        print(f"[TTS Service]: Processed text: '{processed_text}'")
         try:
             with torch.inference_mode():
                 audio_tensor = self.model.apply_tts(
-                    text=text,
+                    text=processed_text,
                     speaker=Config.speaker,
                     sample_rate=Config.sample_rate,
                     put_accent=True,

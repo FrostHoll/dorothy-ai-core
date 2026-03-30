@@ -9,7 +9,7 @@ if __name__ == "__main__":
     async def test():
         payload = {
             "voice_session_id": "1234",
-            "text": "Привет! Расскажи, как прошел твой день? Надо озвучить 10 предложений."
+            "text": "Привет! Это post-processed текст. Надо озвучить 10 предложений. frostholl сказал, что 25.6 йен - хороший курс."
         }
         response = await client.post("/synthesize", json=payload)
         response.raise_for_status()
