@@ -1,29 +1,21 @@
-import subprocess
+import os
+import ctypes
 
+opus_path = os.getcwd()
+ctypes.CDLL(os.path.join(opus_path, 'opus.dll'))
+os.add_dll_directory(opus_path)
+
+import opuslib
+
+opus_decoder = opuslib.Decoder(48000, 2)
 
 class AudioDecoder:
     @staticmethod
-    async def opus_to_wav(opus_data: bytes) -> bytes:
-        command = [
-            'ffmpeg',
-            '-i', 'pipe:0',
-            '-ar', '16000',
-            '-ac', '1',
-            '-f', 'wav'
-            'pipe:1'
-        ]
-
-        process = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-
-        stdout, stderr = process.communicate(input=opus_data)
-
-        if process.returncode != 0:
-            print(f"FFmpeg error: {stderr.decode()}")
-            return b''
-
-        return stdout
+    def decode_opus_frames_to_pcm(opus_frames: list[bytes]) -> bytes:
+        result = []
+        for frame in opus_frames:
+            try:
+                result.append(opus_decoder.decode(frame, frame_size=960))
+            except opuslib.OpusError:
+                pass
+        return b''.join(result)

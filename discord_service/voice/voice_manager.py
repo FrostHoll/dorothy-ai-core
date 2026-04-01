@@ -52,7 +52,7 @@ class VoiceManager:
 
         if records:
             for rec in records:
-                if rec.pcm_frames:
+                if rec.opus_frames:
                     response = await self.voice_orc_client.request_process(
                         voice_session_id=session.session_id,
                         external_id=ExternalIDCompiler.compile(user_id, channel_id, guild_id),

@@ -7,6 +7,7 @@ from voice_orchestrator.http_clients.tts_client import TTSClient
 from voice_orchestrator.voice.voice_segment import VoiceSegment
 from voice_orchestrator.voice.voice_session import VoiceSession
 from voice_orchestrator.voice.voice_session_state import VoiceSessionState
+from voice_orchestrator.settings import VoiceOrchestratorSettings as Settings
 
 
 class VoiceSessionManager:
@@ -72,8 +73,10 @@ class VoiceSessionManager:
             session.state = VoiceSessionState.GENERATING
             print("Generating response")
 
-            response = await self.generate_response(session)
-            #response = session.messages[0]
+            if Settings.use_mock_core_response:
+                response = session.messages[0]
+            else:
+                response = await self.generate_response(session)
 
             print(f"Got response: {response}")
             session.response = response
