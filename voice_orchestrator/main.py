@@ -31,7 +31,7 @@ app.include_router(register_voice_routes())
 @app.get("/health")
 async def root(container: ContainerDep):
     use_case = container.check_modules
-    result, error_msg = await use_case.execute()
-    if result:
+    has_errors, error_msg = await use_case.execute()
+    if has_errors:
         raise HTTPException(status_code=500, detail=error_msg)
     return {"message": "Dorothy Voice Orchestrator is running."}

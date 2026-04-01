@@ -25,17 +25,16 @@ class VoiceSession:
         if self.is_recording:
             return None
         self.buffer.clear()
-        self.listener.reset_packets()
         self.is_recording = True
         self.listener.is_recording = True
         self.is_pending_result = True
         print("[VoiceSession]: Start listening...")
         try:
+            self.listener.set_start_timestamp()
             self.voice_client.listen(self.listener)
             await asyncio.sleep(duration)
-            self.voice_client.stop()
-
             wav_data = self.buffer.get_records()
+            self.voice_client.stop_listening()
 
             return wav_data
         finally:

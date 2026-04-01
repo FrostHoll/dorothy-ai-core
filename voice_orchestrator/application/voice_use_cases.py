@@ -4,6 +4,7 @@ from voice_orchestrator.http_clients.tts_client import TTSClient
 from voice_orchestrator.voice.voice_segment import VoiceSegment
 from voice_orchestrator.voice.voice_session_manager import VoiceSessionManager
 from voice_orchestrator.voice.voice_session_state import VoiceSessionState
+from voice_orchestrator.settings import VoiceOrchestratorSettings as Settings
 
 
 class VoiceProcessUseCase:
@@ -49,11 +50,11 @@ class CheckModulesStatusUseCase:
         error_msg = ""
         if not await self.stt.check_health():
             has_error = True
-            error_msg = " ".join("Модуль STT недоступен.")
-        if not await self.core.check_health():
+            error_msg = " ".join("STT is offline.")
+        if not Settings.use_mock_core_response and not await self.core.check_health():
             has_error = True
-            error_msg = " ".join("Модуль Core недоступен.")
+            error_msg = " ".join("Core is offline.")
         if not await self.tts.check_health():
             has_error = True
-            error_msg = " ".join("Модуль TTS недоступен.")
+            error_msg = " ".join("TTS is offline.")
         return has_error, error_msg
