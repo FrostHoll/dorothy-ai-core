@@ -1,7 +1,6 @@
 import asyncio
 import wave
 import numpy as np
-import resampy
 import whisper
 
 from stt_service.api.schemas import JobStatus
@@ -33,9 +32,9 @@ async def transcription_worker() -> None:
             job.text = f"{job.user_name}: {result}"
             job.status = JobStatus.done
             with wave.open(f"E://test_{job.user_name}.wav", "wb") as wf:
-                wf.setnchannels(2)
+                wf.setnchannels(1)
                 wf.setsampwidth(2)
-                wf.setframerate(48000)
+                wf.setframerate(16000)
                 wf.writeframes(job.audio_bytes)
         except Exception as e:
             job.error = str(e)
@@ -44,12 +43,8 @@ async def transcription_worker() -> None:
             queue.task_done()
 
 def _transcribe(audio_bytes: bytes) -> str | None:
-    audio = np.frombuffer(audio_bytes, dtype=np.int16)
-    audio = audio.reshape(-1, 2)
-    mono = audio.mean(axis=1).astype(np.float32)
-
-    audio_16k = resampy.resample(mono, 48000, 16000)
-    audio_16k = audio_16k / 32768.0
+    audio = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32)
+    audio_16k = audio / 32768.0
 
     result = _model.transcribe(audio=audio_16k, language="ru")
     print(f"job is done: {result['text']}")

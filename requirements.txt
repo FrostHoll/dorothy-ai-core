@@ -16,6 +16,7 @@ openai-whisper
 resampy
 typing_extensions
 torch
+torchaudio
 omegaconf
 scipy
 num2words

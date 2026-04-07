@@ -26,7 +26,7 @@ class VoiceSessionManager:
     async def add_segment(self, session_id: str, external_id: str, segment: VoiceSegment) -> None:
         session = self.get_or_create(session_id, external_id)
 
-        if session.state == VoiceSessionState.DONE:
+        if session.state == VoiceSessionState.EXPIRED:
             session.reset()
 
         if session.state != VoiceSessionState.COLLECTING:
@@ -40,7 +40,7 @@ class VoiceSessionManager:
 
     async def enqueue_stt(self, session: VoiceSession, segment: VoiceSegment) -> None:
         print("sending to stt...")
-        job_id = await self.stt_client.enqueue_segment(segment.pcm_48k, segment.user_name)
+        job_id = await self.stt_client.enqueue_segment(segment.pcm_data, segment.user_name)
         asyncio.create_task(self.poll_result(session, job_id))
 
     async def poll_result(self, session: VoiceSession, job_id: str) -> None:
@@ -57,6 +57,8 @@ class VoiceSessionManager:
         print(f"Got STT result: {text}")
         session.pending_stt -= 1
         cleaned = VoiceSessionManager.clean_transcript(text)
+        if len(cleaned.split(": ")) < 2:
+            cleaned = None
         print(f"Cleaned result: {cleaned}")
         if cleaned:
             session.messages.append(cleaned)
@@ -69,7 +71,7 @@ class VoiceSessionManager:
 
         is_silence = time.time() - session.last_activity > self.silence_timeout
 
-        if is_silence and session.pending_stt == 0:
+        if is_silence and session.pending_stt == 0 and len(session.messages) > 0:
             session.state = VoiceSessionState.GENERATING
             print("Generating response")
 

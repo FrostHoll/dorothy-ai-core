@@ -1,2 +1,2 @@
 class VoiceOrchestratorSettings:
-    use_mock_core_response = False
+    use_mock_core_response = True

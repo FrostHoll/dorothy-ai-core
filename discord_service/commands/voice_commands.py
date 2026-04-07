@@ -54,8 +54,34 @@ def setup(tree: app_commands.CommandTree, voice_manager: VoiceManager):
             return
         try:
             response = await voice_manager.listen(interaction.user.id, interaction.channel.id, interaction.guild.id, seconds)
-            await interaction.followup.send("Генерирую ответ..." if response else "ERROR")
+            await interaction.followup.send(response if "ERROR" in response else "Генерирую ответ...")
         except Exception as e:
             await interaction.followup.send(f"Ошибка: {str(e)}")
+
+    @voice.command(name="start", description="Начать прослушивание голосового канала")
+    async def start(interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+
+        vc = interaction.guild.voice_client
+        if not vc:
+            await interaction.followup.send("Я не нахожусь в голосовом канале. 😔", ephemeral=True)
+            return
+
+        await voice_manager.start_listening(interaction.user.id, interaction.channel.id, interaction.guild.id)
+
+        await interaction.followup.send("Я готова слушать! 👋")
+
+    @voice.command(name="stop", description="Остановить прослушивание голосового канала")
+    async def stop(interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+
+        vc = interaction.guild.voice_client
+        if not vc:
+            await interaction.followup.send("Я не нахожусь в голосовом канале. 😔", ephemeral=True)
+            return
+
+        await voice_manager.stop_listening(interaction.guild_id)
+
+        await interaction.followup.send("Я больше не слушаю!")
 
     tree.add_command(voice)

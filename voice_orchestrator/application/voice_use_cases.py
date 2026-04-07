@@ -37,6 +37,7 @@ class GetVoiceSessionResultsUseCase:
         if voice_session_id not in self.manager.sessions:
             return None
         session = self.manager.sessions[voice_session_id]
+        session.state = VoiceSessionState.EXPIRED
         return "\n".join(session.messages), session.response
 
 class CheckModulesStatusUseCase:

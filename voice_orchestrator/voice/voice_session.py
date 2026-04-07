@@ -22,8 +22,6 @@ class VoiceSession:
         self.result = None
 
     def reset(self):
-        if self.state != VoiceSessionState.DONE:
-            return
         self.state = VoiceSessionState.COLLECTING
         self.segments.clear()
         self.messages.clear()
