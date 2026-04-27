@@ -29,10 +29,10 @@ class AudioListener(AudioSink):
             return
         if data.packet.decrypted_data:
             opus_frame = data.packet.decrypted_data
-            pcm_frame = AudioDecoder.decode_opus_to_pcm_16k_frame(opus_frame)
+            record = self.buffer.get_or_create_record(user.id, user.name)
+            pcm_frame = AudioDecoder.decode_opus_to_pcm_16k_frame(record.decoder, opus_frame)
             if pcm_frame:
                 if self.vad_callback:
-                    record = self.buffer.get_or_create_record(user.id, user.name)
                     self.vad_manager.process_packet(
                         record,
                         pcm_frame,

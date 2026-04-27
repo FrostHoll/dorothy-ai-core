@@ -1,13 +1,15 @@
 import asyncio
 import wave
 import numpy as np
-import whisper
+from faster_whisper import WhisperModel
 
 from stt_service.api.schemas import JobStatus
 from stt_service.core.queue import get_queue
 from stt_service.core.store import get_job
 
-_model = whisper.load_model("small")
+_model = WhisperModel(
+    model_size_or_path=""
+)
 
 async def transcription_worker() -> None:
     queue = get_queue()
@@ -45,7 +47,7 @@ async def transcription_worker() -> None:
 def _transcribe(audio_bytes: bytes) -> str | None:
     audio = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32)
     audio_16k = audio / 32768.0
-
+    ## TODO: faster-whisper implementation
     result = _model.transcribe(audio=audio_16k, language="ru")
     print(f"job is done: {result['text']}")
     return result['text']

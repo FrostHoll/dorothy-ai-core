@@ -12,7 +12,7 @@ class VADManager:
             model='silero_vad'
         )
         print("[VADManager]: VAD model loaded.")
-        self.silence_threshold = 600
+        self.silence_threshold = 1200
         self.chunk_ms = 20
         self.min_speech_ms = 250
         self.vad_buffer_size = 1024

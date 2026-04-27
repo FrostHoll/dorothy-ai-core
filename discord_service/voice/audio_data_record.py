@@ -1,4 +1,13 @@
 from collections import deque
+import os
+import ctypes
+
+opus_path = os.getcwd()
+ctypes.CDLL(os.path.join(opus_path, 'opus.dll'))
+os.add_dll_directory(opus_path)
+
+import opuslib
+from opuslib import Decoder
 
 class AudioDataRecord:
 
@@ -11,6 +20,7 @@ class AudioDataRecord:
         self.silence_start: float = 0.0
         self.speech_duration: float = 0.0
         self.vad_buffer = b''
+        self.decoder: Decoder = opuslib.Decoder(48000, 2)
 
     def add_frame(self, frame: bytes):
         self.frames.append(frame)
