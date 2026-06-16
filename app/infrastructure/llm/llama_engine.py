@@ -1,12 +1,12 @@
 import time
 
-from llama_cpp import Llama
+from llama_cpp import Llama, ChatCompletionTool
 
 from app.core.config import LLMConfig as Config
 from app.domain.entities.message import Message
 
 class LlamaEngine:
-    def __init__(self):
+    def __init__(self, tools: list[ChatCompletionTool] | None = None):
         self.model = Llama(
             model_path = Config.path,
             n_gpu_layers=Config.gpu_layers,
@@ -14,6 +14,7 @@ class LlamaEngine:
             verbose = False
         )
         self.generated_text = ""
+        self.tools = tools
         print("[LLM]: LLama Engine initialized.")
 
     def _create_chat_completion(self, prompt):
@@ -21,6 +22,7 @@ class LlamaEngine:
             messages=prompt,
             temperature=Config.completion_temp,
             repeat_penalty=1.1,
+            tools = self.tools,
             stream=True
         )
 
