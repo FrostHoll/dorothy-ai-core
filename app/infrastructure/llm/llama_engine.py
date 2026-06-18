@@ -4,9 +4,11 @@ from llama_cpp import Llama, ChatCompletionTool
 
 from app.core.config import LLMConfig as Config
 from app.domain.entities.message import Message
+from app.infrastructure.tools.tool_container import ToolContainer
+
 
 class LlamaEngine:
-    def __init__(self, tools: list[ChatCompletionTool] | None = None):
+    def __init__(self, tools: ToolContainer | None = None):
         self.model = Llama(
             model_path = Config.path,
             n_gpu_layers=Config.gpu_layers,
@@ -14,15 +16,18 @@ class LlamaEngine:
             verbose = False
         )
         self.generated_text = ""
-        self.tools = tools
+        self.tool_container = tools
         print("[LLM]: LLama Engine initialized.")
 
     def _create_chat_completion(self, prompt):
+        tools: list[ChatCompletionTool] | None = None
+        if self.tool_container:
+            tools = self.tool_container.get_tools_prompt()
         stream = self.model.create_chat_completion(
             messages=prompt,
             temperature=Config.completion_temp,
             repeat_penalty=1.1,
-            tools = self.tools,
+            tools = tools,
             stream=True
         )
 
@@ -49,7 +54,7 @@ class LlamaEngine:
         total_tokens = total_tokens_generated + prompt_tokens
         text = " ".join((self.generated_text.strip()).split())
         print(f"[LLM]: Prompt tokens: {prompt_tokens} Generated tokens: {total_tokens_generated} Total: {total_tokens}/{Config.max_context}")
-        print(f"[LLM]: Response:({text}) Generation time: {end_time - start_time:.2f} s")
+        #print(f"[LLM]: Response:({text}) Generation time: {end_time - start_time:.2f} s")
         return Message(role="assistant", content=text, token_count=total_tokens_generated), self.generated_text, total_tokens
 
 ##TODO: complete restore and summarization logic

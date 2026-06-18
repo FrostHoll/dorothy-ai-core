@@ -1,6 +1,4 @@
 import random
-import re
-from abc import ABC, abstractmethod
 from typing import Any
 
 import html2text
@@ -9,66 +7,17 @@ from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 
 from app.infrastructure.llm.llama_engine import LlamaEngine
+from app.infrastructure.tools.text_postprocessor import TextPostprocessor
+from app.infrastructure.tools.tool_abc import ToolABC
+from app.infrastructure.tools.tool_container import ToolContainer
+from app.infrastructure.tools.tool_parameter import ToolParameter
+from app.infrastructure.tools.tool_proxy import ToolProxy
 
-class ToolParameter:
-    def __init__(self, name: str, param_type: str, description: str, required: bool = False, enum: list[str] | None = None):
-        self.name = name
-        self.param_type = param_type
-        self.description = description
-        self.required = required
-        self.enum = enum
-
-    def get_param_info(self) -> dict:
-        if self.enum is not None:
-            return {self.name: {"type": self.param_type, "description": self.description, "enum": self.enum}}
-        return {self.name: {"type": self.param_type, "description": self.description}}
-
-class ToolABC(ABC):
-    def __init__(self):
-        self.parameters: list[ToolParameter] = []
-
-    @abstractmethod
-    def get_name(self) -> str:
-        pass
-
-    @abstractmethod
-    def get_description(self) -> str:
-        pass
-
-    @abstractmethod
-    def _execute(self, params: dict[str, str]) -> Any:
-        pass
-
-    def execute(self, params: dict[str, str]) -> Any:
-        for par in self.parameters:
-            if par.required and par.name not in params:
-                raise ValueError(f"Incorrect format: missing required argument {par.name}")
-        return self._execute(params)
-
-    def get_tool_info(self) -> dict:
-        params_info = {}
-        required = []
-        for p in self.parameters:
-            params_info.update(p.get_param_info())
-            if p.required:
-                required.append(p.name)
-        return {
-            "type": "function",
-            "function": {
-                "name": self.get_name(),
-                "description": self.get_description(),
-                "parameters": {
-                    "type": "object",
-                    "properties": params_info,
-                    "required": required
-                }
-            }
-        }
 
 class RollNumberTool(ToolABC):
     def __init__(self):
         super().__init__()
-        self.parameters = [
+        self._parameters = [
             ToolParameter("maxRange", "integer", "Maximum value of the range. Inclusive.")
         ]
 
@@ -81,32 +30,22 @@ class RollNumberTool(ToolABC):
     def _execute(self, params: dict[str, str]) -> Any:
         max_range = 100
         if "maxRange" in params:
-            max_range = params["maxRange"]
+            max_range = int(params["maxRange"])
         return random.randint(0, max_range)
 
-class EpicTool(ToolABC):
-    def __init__(self):
-        super().__init__()
-        self.parameters = [
-            ToolParameter("note", "string", "Note about user, need to be saved to memory.", required=True)
-        ]
-
-    def get_name(self) -> str:
-        return "note"
-
-    def get_description(self) -> str:
-        return "Use this tool to save notes about user. Notes are used to personalize conversation with user. Note every information you might use further in the conversation. Call this at any time you need it."
-
-    def _execute(self, params: dict[str, str]) -> Any:
-        print(params["note"])
-        return "Note has been saved."
+    def get_display_text(self, params: dict[str, str]) -> str:
+        max_range = 100
+        if "maxRange" in params:
+            max_range = params["maxRange"]
+        return f"|Генерирую случайное число от 0 до {max_range}|"
 
 class WebSearchTool(ToolABC):
     def __init__(self):
         super().__init__()
-        self.parameters = [
+        self._parameters = [
             ToolParameter("query", "string", "Query text to search.", required=True)
         ]
+        self.ddgs_client = DDGS()
 
     def get_name(self) -> str:
         return "WebSearch"
@@ -121,8 +60,7 @@ class WebSearchTool(ToolABC):
         return self._results_to_string(results)
 
     def _search_duckduckgo(self, query: str) -> list[dict[str, str]]:
-        ddgs_client = DDGS()
-        results = ddgs_client.text(query, max_results=5, region="ru-ru")
+        results = self.ddgs_client.text(query, max_results=5, region="ru-ru")
         return results
 
     def _results_to_string(self, sources: list[dict[str, str]]) -> str:
@@ -131,10 +69,14 @@ class WebSearchTool(ToolABC):
             for i, src in enumerate(sources)
         )
 
+    def get_display_text(self, params: dict[str, str]) -> str:
+        query = params["query"]
+        return f"|Ищу по запросу {query}...|"
+
 class GetWebpageTool(ToolABC):
     def __init__(self):
         super().__init__()
-        self.parameters = [
+        self._parameters = [
             ToolParameter("url", "string", "The URL to a webpage you want to get.", required=True),
             ToolParameter("substring", "string", "The substring to search for in the page content. "
                                                  "There's a high chance of not finding the specified substring, in this case try using other substring."),
@@ -169,7 +111,7 @@ class GetWebpageTool(ToolABC):
     def get_description(self) -> str:
         return ("Use this tool to get whole content of the webpage. You can use this tool in combination with WebSearchTool, "
                 "to get more useful information. You can pass a substring from \'body\' from search result to get more clean content. "
-                "If you need more information, but it's locked under symbols limitation, you can safely call this tool again"
+                "If you need more information, but it's locked under symbols limitation, you can safely call this tool again. "
                 "IMPORTANT: It is highly recommended to use with \'substring\' parameter. "
                 "If you specified substring and it was not found, the tool will return a full page. "
                 "Some webpages cannot be accessed due to security reasons or being banned. "
@@ -204,6 +146,11 @@ class GetWebpageTool(ToolABC):
             return meta_text + clean_text[:max_symbols]
         except Exception as e:
             raise Exception(f"Error occured during getting content of a webpage: {str(e)}")
+
+    def close(self) -> None:
+        self.context.close()
+        self.browser.close()
+        self.p.stop()
 
     def _get_page_content(self, url: str) -> str | None:
         page = self.context.new_page()
@@ -254,118 +201,57 @@ class GetWebpageTool(ToolABC):
                     break
         return result
 
-class ToolContainer:
-    def __init__(self):
-        self.tools = {}
+    def get_display_text(self, params: dict[str, str]) -> str:
+        url = params["url"]
+        return f"|Читаю страницу {url}...|"
 
-    def register_tool(self, tool: ToolABC):
-        self.tools[tool.get_name()] = tool
+class ListToolsTool(ToolABC):
+    def __init__(self, tool_container: ToolContainer):
+        super().__init__()
+        self.tool_container = tool_container
 
-    def execute(self, tool_call):
-        tool_name = tool_call["name"]
-        if tool_name in self.tools:
-            tool: ToolABC = self.tools[tool_name]
-            result = tool.execute(tool_call["parameters"])
-            return result
-        else:
-            raise ValueError(f"Unable to find tool {tool_name}")
+    def get_name(self) -> str:
+        return "ListTools"
 
-    def get_tools_info(self) -> list:
-        return [tool.get_tool_info() for _, tool in self.tools.items()]
+    def get_description(self) -> str:
+        return "This tool returns list of all tools and their current state (enabled/disabled). Use this tool if you're not sure, what tools you have and whether it's enabled."
 
-def parse_params(params: str):
-    params_dict = {}
-    for p in params.split(','):
-        if len(p.split(':')) != 2:
-            continue
-        param_name, param_value = p.split(':')
-        params_dict.update({param_name: param_value})
-    return params_dict
+    def _execute(self, params: dict[str, str]) -> Any:
+        return str(self.tool_container.get_all_tools())
 
-def parse_custom_params(text: str) -> dict[str, str]:
-    params = {}
-    buffer = []
-    current_key = None
-    in_value = False
-    in_string = False
-
-    normalized = text.replace('<|"|>', '"')
-
-    i = 0
-    while i < len(normalized):
-        char = normalized[i]
-
-        if not in_value:
-            if char == ':':
-                current_key = "".join(buffer).strip()
-                buffer = []
-                in_value = True
-                i += 1
-                continue
-            elif char == ',':
-                i += 1
-                continue
-        else:
-            if char == '"' and (i == 0 or normalized[i - 1] != '\\'):
-                in_string = not in_string
-
-            if char == ',' and not in_string:
-                value = "".join(buffer).strip()
-                if current_key:
-                    if value.startswith('"') and value.endswith('"'):
-                        value = value[1:-1]
-                    params[current_key] = value
-                buffer = []
-                current_key = None
-                in_value = False
-                i += 1
-                continue
-
-        buffer.append(char)
-        i += 1
-
-    if in_value and current_key:
-        value = "".join(buffer).strip()
-        if value.startswith('"') and value.endswith('"'):
-            value = value[1:-1]
-        params[current_key] = value
-
-    return params
-
-def parse_tool_calls(response_text):
-    pattern = r'<|tool_call>(.*?)<tool_call|>'
-    matches = re.findall(pattern, response_text, re.DOTALL)
-
-    tool_calls = []
-    for match in matches:
-        call_match = re.match(r'call:(\w+){(.*)}', match.strip())
-        if call_match:
-            tool_name = call_match.group(1)
-            params_str = call_match.group(2)
-            params = parse_custom_params(params_str)
-            tool_calls.append({
-                "name": tool_name,
-                "parameters": params
-            })
-    return tool_calls
+    def get_display_text(self, params: dict[str, str]) -> str:
+        return "|Смотрю доступные инструменты...|"
 
 if __name__ == "__main__":
     container = ToolContainer()
-    tool4 = WebSearchTool()
-    tool5 = GetWebpageTool()
-    container.register_tool(tool4)
-    container.register_tool(tool5)
+    TextPostprocessor.tool_container = container
+    container.register_tool(ToolProxy(ListToolsTool, tool_container=container))
+    container.register_tool(ToolProxy(GetWebpageTool))
+    container.register_tool(ToolProxy(WebSearchTool))
+    container.register_tool(ToolProxy(RollNumberTool))
 
-    tools_info = container.get_tools_info()
+    container.enable_tool("ListToolsTool")
+    container.enable_tool("WebSearchTool")
+    container.enable_tool("GetWebpageTool")
 
-    print(tools_info)
-
-    model = LlamaEngine(tools_info)
+    model = LlamaEngine(container)
 
     history = [{"role": "system", "content": "You are an AI assistant, who can use tools. If tool is malfunctioning, alert user and do not hallucinate the answer."}]
 
     while True:
         user_input = input(">>>")
+
+        if user_input.startswith("!enable"):
+            _, tool_name = user_input.split()
+            try:
+                container.enable_tool(tool_name)
+            except ValueError as e:
+                print(str(e))
+            finally:
+                continue
+        if user_input.startswith("!list_tools"):
+            print(container.get_all_tools())
+            continue
 
         history.append({"role": "user", "content": user_input})
 
@@ -373,17 +259,24 @@ if __name__ == "__main__":
 
         history.append({"role": "assistant", "content": response})
 
-        while "tool_call" in response:
-            tool_calls = parse_tool_calls(response)
-            print(tool_calls)
-            for tool_call in tool_calls:
-                try:
-                    result = container.execute(tool_call)
-                    print(result)
-                    history.append({"role": "assistant", "content": f"response:{tool_call["name"]}{{{result}}}"})
-                except Exception as e:
-                    print(f"Tool execution failure: {str(e)}")
-                    history.append({"role": "assistant",
-                                    "content": f"Failure during execution of tool {tool_call["name"]}: {str(e)}"})
+        if "tool_call" in response:
+            while "tool_call" in response:
+                clean_text, tool_calls = TextPostprocessor.process_tool_calls(response)
+                print(tool_calls)
+                print(clean_text)
+                for tool_call in tool_calls:
+                    try:
+                        result = container.execute(tool_call)
+                        print(result)
+                        history.append({"role": "assistant", "content": f"response:{tool_call["name"]}{{{result}}}"})
+                    except Exception as e:
+                        print(f"Tool execution failure: {str(e)}")
+                        history.append({"role": "assistant",
+                                        "content": f"Failure during execution of tool {tool_call["name"]}: {str(e)}"})
 
-            _, response, _ = model.create_chat_completion(history)
+                _, response, _ = model.create_chat_completion(history)
+        else:
+            print(response)
+            continue
+
+        print(response)
