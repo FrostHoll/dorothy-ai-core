@@ -8,8 +8,10 @@ class ToolContainer:
         self.tools: dict[str, ToolProxy] = {}
         self.active_tools: dict[str, ToolProxy] = {}
 
-    def register_tool(self, tool: ToolProxy):
+    def register_tool(self, tool: ToolProxy, enabled_by_default: bool = False):
         self.tools[tool.tool_class.__name__] = tool
+        if enabled_by_default:
+            self.enable_tool(tool.tool_class.__name__)
 
     def enable_tool(self, tool_name: str):
         if tool_name not in self.tools:
@@ -18,21 +20,21 @@ class ToolContainer:
         tool.enable()
         self.active_tools[tool.get_name()] = tool
 
-    def disable_tool(self, tool_name: str):
+    async def disable_tool(self, tool_name: str):
         if tool_name not in self.tools:
             raise ValueError(f"Tool named {tool_name} does not exist.")
         tool = self.tools[tool_name]
         if tool.instance:
             if tool.get_name() in self.active_tools:
                 self.active_tools.pop(tool.get_name())
-        tool.disable()
+        await tool.disable()
 
-    def execute(self, tool_call: dict[str, str | dict[str, str]]) -> Any:
+    async def execute(self, tool_call: dict[str, str | dict[str, str]]) -> Any:
         tool_name = tool_call["name"]
         if tool_name not in self.active_tools:
             raise ValueError(f"Tool named {tool_name} is not enabled or does not exist.")
         tool = self.active_tools[tool_name]
-        result = tool.execute(tool_call["parameters"])
+        result = await tool.execute(tool_call["parameters"])
         return result
 
     def get_all_tools(self) -> list[dict[str, bool]]:

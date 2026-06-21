@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 from app.infrastructure.tools.tool_abc import ToolABC
@@ -25,7 +26,7 @@ class ToolProxy(ToolABC):
             self.is_enabled = True
             print(f"[ToolProxy]: Tool {self.tool_class.__name__} is enabled.")
 
-    def disable(self):
+    async def disable(self):
         if self.instance:
             self.instance.close()
             self.instance = None
@@ -40,9 +41,9 @@ class ToolProxy(ToolABC):
         self._check_enabled()
         return self.instance.get_description()
 
-    def _execute(self, params: dict[str, str]) -> Any:
+    async def _execute(self, params: dict[str, str]) -> Any:
         self._check_enabled()
-        return self.instance._execute(params)
+        return await self.instance._execute(params)
 
     def get_display_text(self, params: dict[str, str]) -> str | None:
         self._check_enabled()

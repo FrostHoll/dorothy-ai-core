@@ -19,7 +19,7 @@ class ToolABC(ABC):
         pass
 
     @abstractmethod
-    def _execute(self, params: dict[str, str]) -> Any:
+    async def _execute(self, params: dict[str, str]) -> Any:
         pass
 
     def close(self) -> None:
@@ -29,11 +29,11 @@ class ToolABC(ABC):
     def get_display_text(self, params: dict[str, str]) -> str:
         pass
 
-    def execute(self, params: dict[str, str]) -> Any:
+    async def execute(self, params: dict[str, str]) -> Any:
         for par in self.parameters:
             if par.required and par.name not in params:
                 raise ValueError(f"Incorrect format: missing required argument \'{par.name}\'")
-        return self._execute(params)
+        return await self._execute(params)
 
     def get_tool_info(self) -> dict:
         params_info = {}

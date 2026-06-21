@@ -20,3 +20,7 @@ omegaconf
 scipy
 num2words
 transliterate
+ddgs
+html2text
+playwright
+beautifulsoup4
