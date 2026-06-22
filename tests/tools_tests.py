@@ -1,4 +1,6 @@
-from app.infrastructure.llm.llama_engine import LlamaEngine
+from app.domain.entities.message import Message
+from app.infrastructure.llm.llm_with_tools import LLMWithTools
+from app.infrastructure.llm.lms_engine import LMSEngine
 from app.infrastructure.tools.classes.GetWebpageTool import GetWebpageTool
 from app.infrastructure.tools.classes.ListToolsTool import ListToolsTool
 from app.infrastructure.tools.classes.RollNumberTool import RollNumberTool
@@ -6,8 +8,9 @@ from app.infrastructure.tools.classes.WebSearchTool import WebSearchTool
 from app.infrastructure.tools.text_postprocessor import TextPostprocessor
 from app.infrastructure.tools.tool_container import ToolContainer
 from app.infrastructure.tools.tool_proxy import ToolProxy
+import asyncio
 
-if __name__ == "__main__":
+async def main():
     container = ToolContainer()
     TextPostprocessor.tool_container = container
     container.register_tool(ToolProxy(ListToolsTool, tool_container=container), True)
@@ -15,9 +18,10 @@ if __name__ == "__main__":
     container.register_tool(ToolProxy(WebSearchTool), True)
     container.register_tool(ToolProxy(RollNumberTool))
 
-    model = LlamaEngine(container)
+    model = LLMWithTools(LMSEngine(), container)
 
-    history = [{"role": "system", "content": "You are an AI assistant, who can use tools. If tool is malfunctioning, alert user and do not hallucinate the answer."}]
+    history = [Message(role="system",
+                       content="You are an AI assistant, who can use tools. If tool is malfunctioning, alert user and do not hallucinate the answer.")]
 
     while True:
         user_input = input(">>>")
@@ -34,30 +38,14 @@ if __name__ == "__main__":
             print(container.get_all_tools())
             continue
 
-        history.append({"role": "user", "content": user_input})
+        history.append(Message(role="user", content=user_input))
 
-        _, response, _ = model.create_chat_completion(history)
+        msgs, response, _ = await model.create_chat_completion_with_tools(history)
 
-        history.append({"role": "assistant", "content": response})
+        history.extend(msgs)
 
-        if "tool_call" in response:
-            while "tool_call" in response:
-                clean_text, tool_calls = TextPostprocessor.process_tool_calls(response)
-                print(tool_calls)
-                print(clean_text)
-                for tool_call in tool_calls:
-                    try:
-                        result = container.execute(tool_call)
-                        print(result)
-                        history.append({"role": "assistant", "content": f"response:{tool_call["name"]}{{{result}}}"})
-                    except Exception as e:
-                        print(f"Tool execution failure: {str(e)}")
-                        history.append({"role": "assistant",
-                                        "content": f"Failure during execution of tool {tool_call["name"]}: {str(e)}"})
+        for r in response:
+            print(r)
 
-                _, response, _ = model.create_chat_completion(history)
-        else:
-            print(response)
-            continue
-
-        print(response)
+if __name__ == "__main__":
+    asyncio.run(main())

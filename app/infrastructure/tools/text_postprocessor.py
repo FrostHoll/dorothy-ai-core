@@ -7,6 +7,10 @@ class TextPostprocessor:
     tool_container: ToolContainer
 
     @staticmethod
+    def get_display_text_by_tool_call(tool_call) -> str:
+        return TextPostprocessor.tool_container.get_tool_call_display_text(tool_call["name"], tool_call["parameters"])
+
+    @staticmethod
     def process_tool_calls(response_text):
         pattern = r'<\|tool_call>(.*?)<tool_call\|>'
 
