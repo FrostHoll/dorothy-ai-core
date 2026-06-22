@@ -10,6 +10,7 @@ class Persona:
     def compile(self):
         if self.name is not None:
             self.system_prompt = self.system_prompt_template.format(
+                datetime = "{datetime}",
                 name = self.name,
                 description = self.description,
                 traits = ", ".join(self.traits),

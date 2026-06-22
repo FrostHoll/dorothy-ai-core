@@ -26,11 +26,16 @@ class GenerateResponseUseCase:
             token_budget = self.llm.get_context_window() - self.llm.get_reserved_tokens() - user_input_tokens - system_prompt_tokens
             user_message = Message(role="user", content=user_input, token_count=user_input_tokens)
             messages = await self.prompt_builder.build(user_message, uow.messages, conversation_id, token_budget)
-            msg, response, _ = await self.llm.create_chat_completion(messages)
+            #msg, response, _ = await self.llm.create_chat_completion(messages)
+            msgs, responses, _ = await self.llm.create_chat_completion_with_tools(messages)
 
+            # await uow.messages.add_many_memory([
+            #     user_message,
+            #     msg
+            # ], conversation_id)
             await uow.messages.add_many_memory([
                 user_message,
-                msg
+                *msgs
             ], conversation_id)
             created_at = datetime.now()
             if new_chat:
@@ -49,6 +54,8 @@ class GenerateResponseUseCase:
                     user_input,
                     created_at
                 )
+
+            response = "\n".join(responses)
 
             return response, conversation_id, created_at
 

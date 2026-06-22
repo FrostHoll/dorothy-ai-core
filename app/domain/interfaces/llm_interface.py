@@ -13,6 +13,10 @@ class LLMInterface(ABC):
         pass
 
     @abstractmethod
+    async def create_chat_completion_with_tools(self, messages: list[Message]) -> tuple[list[Message], list[str], int]:
+        pass
+
+    @abstractmethod
     async def create_restore_completion(self, user_input: str):
         pass
 
